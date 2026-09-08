@@ -51,7 +51,7 @@ input { font: inherit; }
 .game-shell { min-height: 100vh; display: flex; flex-direction: column; background: #17221d; }
 header { height: 74px; flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; background: #111815; border-bottom: 1px solid #344139; }
 .brand { display: flex; align-items: center; gap: 12px; }
-.brand > span { display: grid; place-items: center; width: 38px; height: 38px; background: #d7fe67; color: #121816; font-weight: 800; border-radius: 6px; }
+.brand > .brand-mark { display: grid; place-items: center; width: 38px; height: 38px; background: #d7fe67; border: 1px solid #efffb7; border-radius: 6px; font-size: 24px; line-height: 1; filter: drop-shadow(0 2px 0 rgba(18, 24, 22, .28)); }
 h1 { margin: 0; font: 700 20px "Fraunces", serif; letter-spacing: 0; }
 .brand p { margin: 2px 0 0; color: #9caaa2; font-size: 12px; }
 .icon-button { width: 40px; height: 40px; border: 1px solid #3a4840; border-radius: 6px; color: #dbe3de; background: #1c2721; display: grid; place-items: center; cursor: pointer; }

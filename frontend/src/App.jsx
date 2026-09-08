@@ -61,7 +61,7 @@ function AuthScreen({ onAuthenticated }) {
   }
 
   return <main className="entry-screen"><section className="auth-panel">
-    <div className="brand auth-brand"><span>SH</span><div><h1>Shithead</h1><p>Play your friends online</p></div></div>
+    <div className="brand auth-brand"><span className="brand-mark" role="img" aria-label="Shithead">💩</span><div><h1>Shithead</h1><p>Play your friends online</p></div></div>
     <div className="mode-tabs"><button className={mode === "login" ? "selected" : ""} onClick={() => setMode("login")}>Sign in</button><button className={mode === "signup" ? "selected" : ""} onClick={() => setMode("signup")}>Create account</button></div>
     <form onSubmit={submit}>
       <label>Player name<input value={username} onChange={event => setUsername(event.target.value)} minLength="3" autoComplete="username" required /></label>
@@ -103,7 +103,7 @@ function Lobby({ username, onRoom, onLogout }) {
     catch (err) { setError(err.message); } finally { setBusy(false); }
   }
 
-  return <main className="entry-screen"><header className="lobby-header"><div className="brand"><span>SH</span><div><h1>Shithead</h1><p>Signed in as {username}</p></div></div><button className="icon-button" onClick={onLogout} title="Sign out"><LogOut size={19} /></button></header>
+  return <main className="entry-screen"><header className="lobby-header"><div className="brand"><span className="brand-mark" role="img" aria-label="Shithead">💩</span><div><h1>Shithead</h1><p>Signed in as {username}</p></div></div><button className="icon-button" onClick={onLogout} title="Sign out"><LogOut size={19} /></button></header>
     <section className="lobby-panel"><div><span className="eyebrow">Multiplayer</span><h2>Choose your table</h2><p>Create a private room and share its five-character code, or join a friend who is already waiting.</p></div>
       <button className="room-action" onClick={createRoom} disabled={busy}><Plus size={22} /><span><strong>Create room</strong><small>Start a new private table</small></span></button>
       <div className="divider"><span>or join with a code</span></div>
@@ -220,7 +220,7 @@ function GameRoom({ room, setRoom, soundOn, setSoundOn, onLeave }) {
   const moveFromYou = moveAnimation?.player === game.you.name;
   const displayedTopCard = showPreviousTop ? moveAnimation?.previousTop : game.top_card;
 
-  return <main className="game-shell"><header><div className="brand"><span>SH</span><div><h1>Room {room.code}</h1><p>{room.players.join(" vs ")}</p></div></div><div className="header-actions"><span className={`connection-state ${connection}`}><i />{connection === "live" ? "Live" : "Reconnecting"}</span><button className="icon-button" onClick={() => setSoundOn(value => !value)} title={soundOn ? "Mute sounds" : "Turn sounds on"}>{soundOn ? <Volume2 size={19} /> : <VolumeX size={19} />}</button><button className="icon-button" onClick={onLeave} title="Leave table"><LogOut size={19} /></button></div></header>
+  return <main className="game-shell"><header><div className="brand"><span className="brand-mark" role="img" aria-label="Shithead">💩</span><div><h1>Room {room.code}</h1><p>{room.players.join(" vs ")}</p></div></div><div className="header-actions"><span className={`connection-state ${connection}`}><i />{connection === "live" ? "Live" : "Reconnecting"}</span><button className="icon-button" onClick={() => setSoundOn(value => !value)} title={soundOn ? "Mute sounds" : "Turn sounds on"}>{soundOn ? <Volume2 size={19} /> : <VolumeX size={19} />}</button><button className="icon-button" onClick={onLeave} title="Leave table"><LogOut size={19} /></button></div></header>
     <section className={`table ${moveAnimation?.power ? `table-power-${moveAnimation.power}` : ""}`} aria-label="Card table">
       {!!room.pending?.length && <div className="join-requests"><span><UserPlus size={16} /> Join request</span>{room.pending.map(player => <button key={player.id} onClick={() => approvePlayer(player.id)} disabled={busy}><Check size={15} /> Add {player.name}</button>)}</div>}
       <div className="opponents">{game.opponents.map(opponent => <div data-player={opponent.name} className={`opponent ${game.current_player === opponent.name ? "active-player" : ""}`} key={opponent.name}><div className="player-label"><span className="avatar">{opponent.name[0].toUpperCase()}</span><div><strong>{opponent.name}</strong><small>{opponent.hand_count} in hand</small></div></div><BackCards count={opponent.hand_count} small /></div>)}</div>
