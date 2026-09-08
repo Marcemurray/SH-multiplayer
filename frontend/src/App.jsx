@@ -44,6 +44,18 @@ function BackCards({ count, small = false }) {
   return <div className="card-row stacked">{Array.from({ length: visible }, (_, i) => <Card key={i} hidden small={small} />)}{count > 3 && <span className="count-badge">{count}</span>}</div>;
 }
 
+function LeaveDialog({ open, busy, onCancel, onConfirm }) {
+  if (!open) return null;
+  return <div className="modal-backdrop" role="presentation" onMouseDown={event => event.target === event.currentTarget && onCancel()}>
+    <section className="leave-dialog" role="dialog" aria-modal="true" aria-labelledby="leave-title">
+      <span className="comic-kicker">Leaving so soon?</span>
+      <h2 id="leave-title">Leave this table?</h2>
+      <p>Your seat and cards will return to the game.</p>
+      <div className="dialog-actions"><button className="text-button" onClick={onCancel} disabled={busy}>Stay</button><button className="danger-button" onClick={onConfirm} disabled={busy}><LogOut size={17} /> {busy ? "Leaving..." : "Leave table"}</button></div>
+    </section>
+  </div>;
+}
+
 function AuthScreen({ onAuthenticated }) {
   const [username, setUsername] = useState("");
   const [error, setError] = useState("");
@@ -116,6 +128,7 @@ function GameRoom({ room, setRoom, soundOn, setSoundOn, onLeave }) {
   const [moveAnimation, setMoveAnimation] = useState(null);
   const [showPreviousTop, setShowPreviousTop] = useState(false);
   const [connection, setConnection] = useState("connecting");
+  const [confirmLeave, setConfirmLeave] = useState(false);
   const audioContextRef = useRef(null);
   const lastMoveRef = useRef(room.game?.move_seq || 0);
   const animationTimerRef = useRef(null);
@@ -205,7 +218,16 @@ function GameRoom({ room, setRoom, soundOn, setSoundOn, onLeave }) {
     catch (err) { setError(err.message); } finally { setBusy(false); }
   }
 
-  if (room.status !== "playing") return <main className="entry-screen"><section className="waiting-panel"><span className="waiting-pulse" /><p className="eyebrow">{room.status === "pending" ? "Request sent" : "Room ready"}</p><h2>{room.code}</h2><p>{room.status === "pending" ? "Waiting for the host to approve your request" : "Share the code or approve players below"}</p><button className="copy-button" onClick={() => navigator.clipboard.writeText(room.code)}><Copy size={18} /> Copy room code</button>{room.pending?.map(player => <button className="approve-button" key={player.id} onClick={async () => setRoom(await api(`/api/rooms/${room.code}/approve/${player.id}/`, { method: "POST", body: "{}" }))}><Check size={17} /> Approve {player.name}</button>)}<button className="text-button" onClick={onLeave}>Back to lobby</button></section></main>;
+  async function leaveTable() {
+    setBusy(true); setError("");
+    try {
+      await api(`/api/rooms/${room.code}/leave/`, { method: "POST", body: "{}" });
+      onLeave();
+    } catch (err) { setError(err.message); setConfirmLeave(false); }
+    finally { setBusy(false); }
+  }
+
+  if (room.status !== "playing") return <><main className="entry-screen"><section className="waiting-panel"><span className="waiting-pulse" /><p className="eyebrow">{room.status === "pending" ? "Request sent" : "Room ready"}</p><h2>{room.code}</h2><p>{room.status === "pending" ? "Waiting for the host to approve your request" : "Share the code or approve players below"}</p><button className="copy-button" onClick={() => navigator.clipboard.writeText(room.code)}><Copy size={18} /> Copy room code</button>{room.pending?.map(player => <button className="approve-button" key={player.id} onClick={async () => setRoom(await api(`/api/rooms/${room.code}/approve/${player.id}/`, { method: "POST", body: "{}" }))}><Check size={17} /> Approve {player.name}</button>)}{error && <p className="form-error">{error}</p>}<button className="text-button" onClick={() => setConfirmLeave(true)}>Back to lobby</button></section></main><LeaveDialog open={confirmLeave} busy={busy} onCancel={() => setConfirmLeave(false)} onConfirm={leaveTable} /></>;
 
   const game = room.game;
   displayedGameRef.current = game;
@@ -216,7 +238,7 @@ function GameRoom({ room, setRoom, soundOn, setSoundOn, onLeave }) {
   const moveFromYou = moveAnimation?.player === game.you.name;
   const displayedTopCard = showPreviousTop ? moveAnimation?.previousTop : game.top_card;
 
-  return <main className="game-shell"><header><div className="brand"><span className="brand-mark" role="img" aria-label="Shithead">{"\uD83D\uDCA9"}</span><div><h1>Room {room.code}</h1><p>{room.players.join(" vs ")}</p></div></div><div className="header-actions"><span className={`connection-state ${connection}`}><i />{connection === "live" ? "Live" : "Reconnecting"}</span><button className="icon-button" onClick={() => setSoundOn(value => !value)} title={soundOn ? "Mute sounds" : "Turn sounds on"}>{soundOn ? <Volume2 size={19} /> : <VolumeX size={19} />}</button><button className="icon-button" onClick={onLeave} title="Leave table"><LogOut size={19} /></button></div></header>
+  return <main className="game-shell"><header><div className="brand"><span className="brand-mark" role="img" aria-label="Shithead">{"\uD83D\uDCA9"}</span><div><h1>Room {room.code}</h1><p>{room.players.join(" vs ")}</p></div></div><div className="header-actions"><span className={`connection-state ${connection}`}><i />{connection === "live" ? "Live" : "Reconnecting"}</span><button className="icon-button" onClick={() => setSoundOn(value => !value)} title={soundOn ? "Mute sounds" : "Turn sounds on"}>{soundOn ? <Volume2 size={19} /> : <VolumeX size={19} />}</button><button className="icon-button" onClick={() => setConfirmLeave(true)} title="Leave table"><LogOut size={19} /></button></div></header>
     <section className={`table ${moveAnimation?.power ? `table-power-${moveAnimation.power}` : ""}`} aria-label="Card table">
       {!!room.pending?.length && <div className="join-requests"><span><UserPlus size={16} /> Join request</span>{room.pending.map(player => <button key={player.id} onClick={() => approvePlayer(player.id)} disabled={busy}><Check size={15} /> Add {player.name}</button>)}</div>}
       <div className="opponents">{game.opponents.map(opponent => <div data-player={opponent.name} className={`opponent ${game.current_player === opponent.name ? "active-player" : ""}`} key={opponent.name}><div className="player-label"><span className="avatar">{opponent.name[0].toUpperCase()}</span><div><strong>{opponent.name}</strong><small>{opponent.hand_count} in hand</small></div></div><BackCards count={opponent.hand_count} small /></div>)}</div>
@@ -233,7 +255,7 @@ function GameRoom({ room, setRoom, soundOn, setSoundOn, onLeave }) {
       <div className="you"><div className="reserve your-reserve"><span>Your next cards</span><div className="reserve-cards"><BackCards count={game.you.face_down_count} small /><div className="card-row face-up">{game.you.face_up.map(card => <Card key={card.id} card={card} small disabled={!yourTurn || game.you.active_zone !== "face_up" || busy || !game.legal_ids.includes(card.id)} onClick={event => move("play", card.id, event.currentTarget)} />)}</div></div></div>
         <div data-player={game.you.name} className={`hand-area ${yourTurn ? "active-player" : ""}`}><div className="player-label"><span className="avatar you-avatar">{game.you.name[0].toUpperCase()}</span><div><strong>{game.you.name}</strong><small>{game.you.active_zone.replace("_", " ")}</small></div></div><div className="card-row hand-cards">{faceDownActive ? Array.from({ length: game.you.face_down_count }, (_, i) => <button key={i} className="card card-back" disabled={!yourTurn || busy} onClick={event => move("play", `face-down-${i}`, event.currentTarget)} aria-label="Flip a face-down card" />) : activeCards.map(card => <Card key={card.id} card={card} disabled={!yourTurn || busy || !game.legal_ids.includes(card.id)} onClick={event => move("play", card.id, event.currentTarget)} />)}</div></div>
       </div>
-    </section></main>;
+    </section><LeaveDialog open={confirmLeave} busy={busy} onCancel={() => setConfirmLeave(false)} onConfirm={leaveTable} /></main>;
 }
 
 function App() {

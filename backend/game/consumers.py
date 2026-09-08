@@ -38,4 +38,5 @@ class RoomConsumer(AsyncJsonWebsocketConsumer):
         room = Room.objects.filter(code=self.code).first()
         if room is None:
             return None
-        return room_payload(room, room.members.get(user_id=user_id).user)
+        member = room.members.filter(user_id=user_id).select_related("user").first()
+        return room_payload(room, member.user) if member else None

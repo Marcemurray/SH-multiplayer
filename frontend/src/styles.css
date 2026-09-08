@@ -164,6 +164,36 @@ h1 { margin: 0; font: 900 20px "DM Sans", sans-serif; letter-spacing: 0; text-tr
 @keyframes low-slide { 0% { opacity: 0; transform: translate(-105%,-50%) skew(-7deg); } 22%,76% { opacity: 1; transform: translate(-50%,-50%) skew(-7deg); } 100% { opacity: 0; transform: translate(5%,-50%) skew(-7deg); } }
 @keyframes burn-burst { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.2) rotate(-10deg); } 15% { opacity: 1; transform: translate(-50%,-50%) scale(1.24) rotate(5deg); } 28%,74% { opacity: 1; transform: translate(-50%,-50%) scale(1) rotate(-2deg); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.18) rotate(3deg); } }
 @keyframes quad-stamp { 0% { opacity: 0; transform: translate(-50%,-90%) scale(1.7) rotate(8deg); } 20% { opacity: 1; transform: translate(-50%,-50%) scale(.9) rotate(-2deg); } 30%,78% { opacity: 1; transform: translate(-50%,-50%) scale(1) rotate(0); } 100% { opacity: 0; transform: translate(-50%,-48%) scale(1.04); } }
+.power-callout, .power-reset, .power-low, .power-burn, .power-quad {
+  width: min(300px, calc(100% - 32px));
+  min-height: 116px;
+  padding: 17px 22px;
+  background: #fffbed;
+  border: 3px solid #111713;
+  border-left: 12px solid var(--comic-color);
+  clip-path: none;
+  filter: drop-shadow(7px 7px 0 #111713) drop-shadow(0 16px 18px rgba(0,0,0,.25));
+  animation: clean-power-pop 1.45s cubic-bezier(.2,.8,.2,1) both;
+}
+.power-callout strong { font-size: 26px; text-shadow: 2px 2px 0 var(--comic-color); }
+.power-callout small { margin-top: 4px; font-style: normal; }
+.comic-player { margin-bottom: 6px; border-width: 0 0 2px; background: transparent; transform: none; }
+.comic-player b { background: var(--comic-color); color: #111713; }
+@keyframes clean-power-pop {
+  0% { opacity: 0; transform: translate(-50%, -62%) scale(.72) rotate(-3deg); }
+  18% { opacity: 1; transform: translate(-50%, -50%) scale(1.04) rotate(1deg); }
+  30%, 76% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(-1deg); }
+  100% { opacity: 0; transform: translate(-50%, -55%) scale(.96) rotate(1deg); }
+}
+.modal-backdrop { position: fixed; z-index: 80; inset: 0; display: grid; place-items: center; padding: 24px; background: rgba(10,15,12,.72); }
+.leave-dialog { width: min(380px, 100%); padding: 28px; background: #fffbed; color: #111713; border: 3px solid #111713; border-radius: 4px; box-shadow: 9px 9px 0 #ff655d, 14px 14px 0 #111713; }
+.leave-dialog h2 { margin: 20px 0 7px; font: 900 27px "DM Sans", sans-serif; text-transform: uppercase; }
+.leave-dialog p { margin: 0; color: #536159; }
+.dialog-actions { display: flex; align-items: center; justify-content: flex-end; gap: 18px; margin-top: 26px; }
+.dialog-actions .text-button { margin: 0; }
+.danger-button { min-height: 42px; display: flex; align-items: center; gap: 7px; padding: 0 15px; border: 2px solid #111713; border-radius: 4px; background: #ff655d; color: #111713; box-shadow: 4px 4px 0 #111713; font-weight: 900; cursor: pointer; }
+.danger-button:hover { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #111713; }
+.danger-button:disabled, .dialog-actions button:disabled { opacity: .5; cursor: not-allowed; }
 .table-power-reset { animation: table-flash-reset 1.25s ease-out; }
 .table-power-low { animation: table-flash-low 1.25s ease-out; }
 .table-power-burn, .table-power-quad { animation: table-flash-burn 1.4s ease-out; }

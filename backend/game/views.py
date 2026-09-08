@@ -11,7 +11,7 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
-from .engine import add_player, new_game, pickup, play_card, public_state
+from .engine import add_player, new_game, pickup, play_card, public_state, remove_player
 from .models import Room, RoomMember
 
 
@@ -158,6 +158,43 @@ def join_room(request, code):
         room.save(update_fields=["updated_at"])
         transaction.on_commit(lambda: notify_room(room.code))
     return JsonResponse({"code": room.code, "status": "pending", "message": "Join request sent to the host."})
+
+
+@csrf_exempt
+@auth_required
+def leave_room(request, code):
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    with transaction.atomic():
+        room = Room.objects.select_for_update().filter(code=code.upper()).first()
+        if room is None:
+            return JsonResponse({"ok": True})
+        member = room.members.filter(user=request.user).first()
+        if member is None:
+            return JsonResponse({"ok": True})
+        was_approved = member.status == "approved"
+        approved = list(room.members.filter(status="approved").select_related("user").order_by("joined_at"))
+        player_index = next((index for index, item in enumerate(approved) if item.user_id == request.user.id), None)
+        member.delete()
+        remaining = list(room.members.filter(status="approved").order_by("joined_at"))
+        if not remaining:
+            room.delete()
+        else:
+            update_fields = ["updated_at"]
+            if room.host_id == request.user.id:
+                room.host = remaining[0].user
+                update_fields.append("host")
+            if was_approved and room.status == "playing":
+                if len(remaining) < 2:
+                    room.status = "waiting"
+                    room.state = {}
+                    update_fields.extend(["status", "state"])
+                elif player_index is not None:
+                    remove_player(room.state, player_index)
+                    update_fields.append("state")
+            room.save(update_fields=update_fields)
+        transaction.on_commit(lambda: notify_room(code.upper()))
+    return JsonResponse({"ok": True})
 
 
 @csrf_exempt

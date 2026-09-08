@@ -7,7 +7,7 @@ from django.test import Client, TestCase, TransactionTestCase
 
 from config.asgi import application
 
-from .engine import can_play, new_game, pickup, play_card
+from .engine import can_play, new_game, pickup, play_card, remove_player
 from .models import Room
 
 
@@ -72,6 +72,18 @@ class RuleTests(TestCase):
         game["pile"] = []
         play_card(game, 0, "3-clubs")
         self.assertEqual(len(game["players"][0]["hand"]), 2)
+
+    def test_removing_current_player_passes_turn_and_returns_cards(self):
+        game = new_game(("one", "two", "three"))
+        game["turn"] = 1
+        cards_before = sum(len(game["players"][1][zone]) for zone in ("hand", "face_up", "face_down"))
+        deck_before = len(game["deck"])
+
+        remove_player(game, 1)
+
+        self.assertEqual([player["name"] for player in game["players"]], ["one", "three"])
+        self.assertEqual(game["turn"], 1)
+        self.assertEqual(len(game["deck"]), deck_before + cards_before)
 
 
 class MultiplayerTests(TestCase):
@@ -183,6 +195,38 @@ class MultiplayerTests(TestCase):
         self.assertEqual(third_view["game"]["you"]["name"], "third")
         self.assertEqual(third_view["game"]["current_player"], "third")
         self.assertEqual(moved.status_code, 200)
+
+    def test_leaving_active_game_resets_room_when_one_player_remains(self):
+        host, guest = Client(), Client()
+        self.signup(host, "stayhost")
+        self.signup(guest, "leaver")
+        room = host.post("/api/rooms/", data="{}", content_type="application/json").json()
+        guest.post(f"/api/rooms/{room['code']}/join/", data="{}", content_type="application/json")
+        guest_user = User.objects.get(username="leaver")
+        host.post(f"/api/rooms/{room['code']}/approve/{guest_user.id}/", data="{}", content_type="application/json")
+
+        response = guest.post(f"/api/rooms/{room['code']}/leave/", data="{}", content_type="application/json")
+        updated = host.get(f"/api/rooms/{room['code']}/").json()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(updated["status"], "waiting")
+        self.assertEqual(updated["players"], ["stayhost"])
+        self.assertFalse(Room.objects.get(code=room["code"]).state)
+
+    def test_host_leave_transfers_room_to_next_player(self):
+        host, guest = Client(), Client()
+        self.signup(host, "oldhost")
+        self.signup(guest, "newhost")
+        room = host.post("/api/rooms/", data="{}", content_type="application/json").json()
+        guest.post(f"/api/rooms/{room['code']}/join/", data="{}", content_type="application/json")
+        guest_user = User.objects.get(username="newhost")
+        host.post(f"/api/rooms/{room['code']}/approve/{guest_user.id}/", data="{}", content_type="application/json")
+
+        host.post(f"/api/rooms/{room['code']}/leave/", data="{}", content_type="application/json")
+        updated = guest.get(f"/api/rooms/{room['code']}/").json()
+
+        self.assertEqual(updated["host"], "newhost")
+        self.assertEqual(updated["status"], "waiting")
 
 
 class WebsocketTests(TransactionTestCase):

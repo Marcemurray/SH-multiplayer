@@ -35,6 +35,25 @@ def add_player(game, name):
     game["players"].append(player)
 
 
+def remove_player(game, player_index):
+    player = game["players"].pop(player_index)
+    game["deck"].extend(player["hand"] + player["face_up"] + player["face_down"])
+    random.shuffle(game["deck"])
+    if not game["players"]:
+        return
+    if game["winner"] is not None:
+        if game["winner"] == player_index:
+            game["winner"] = None
+        elif game["winner"] > player_index:
+            game["winner"] -= 1
+    if game["turn"] > player_index:
+        game["turn"] -= 1
+    elif game["turn"] == player_index:
+        game["turn"] %= len(game["players"])
+    game["message"] = f"{player['name']} left the table."
+    record_move(game, player, "leave")
+
+
 def card_sort(card):
     return (RANK_VALUE[card["rank"]], SUITS.index(card["suit"]))
 
