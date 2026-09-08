@@ -2,6 +2,8 @@
 
 A real-time browser version of the pub card game for two to four players. Create an account, open or discover a room, approve new players, and play from separate browsers with animated cards, sound, and comic-style power effects.
 
+[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&builder=docker&repository=github.com/Marcemurray/SH-multiplayer&branch=main&name=sh-multiplayer)
+
 ## Highlights
 
 - Authenticated private and discoverable multiplayer rooms
