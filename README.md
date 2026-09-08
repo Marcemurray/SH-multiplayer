@@ -2,7 +2,7 @@
 
 A real-time browser version of the pub card game for two to four players. Create an account, open or discover a room, approve new players, and play from separate browsers with animated cards, sound, and comic-style power effects.
 
-[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&builder=docker&repository=github.com/Marcemurray/SH-multiplayer&branch=main&name=sh-multiplayer)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Marcemurray/SH-multiplayer)
 
 ## Highlights
 
@@ -52,7 +52,9 @@ For a local multiplayer test, use a normal and private browser window so each pl
 
 The root `Dockerfile` builds React and runs Django through Daphne with WebSocket support. `compose.yaml` adds Redis for room broadcasts, a persistent SQLite volume, and hourly stale-room cleanup.
 
-Before deploying, set the values from `.env.example`, especially a long random `DJANGO_SECRET_KEY`, the public hostname, its HTTPS origin, and `DATABASE_URL`. Platforms that accept Dockerfiles can deploy the repository root directly. A single-instance host can omit Redis and use the built-in channel layer. Stale rooms are cleaned opportunistically and can also be removed with `python manage.py cleanup_rooms --hours 24`.
+For a free hosted deployment, create a Neon PostgreSQL project and copy its pooled connection string. Then use the Render button above and enter that connection string when Render prompts for `DATABASE_URL`. The included `render.yaml` creates a free Docker web service, generates the Django secret automatically, and configures Render's HTTPS hostname. Do not commit the database connection string.
+
+The free Render service runs as a single instance, so it can omit Redis and use the built-in channel layer. Free instances sleep during inactivity and may take a little while to respond to the first request. Stale rooms are cleaned opportunistically and can also be removed with `python manage.py cleanup_rooms --hours 24`.
 
 ## Stack
 
