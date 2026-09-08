@@ -1,0 +1,8 @@
+.git
+.edge-qa
+backend/.venv
+backend/__pycache__
+backend/**/__pycache__
+backend/db.sqlite3
+frontend/node_modules
+frontend/dist

@@ -1,0 +1,30 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-replace-this-before-public-deployment}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS:-http://localhost:8000}
+      REDIS_URL: redis://redis:6379/0
+      DATABASE_PATH: /app/data/db.sqlite3
+    volumes:
+      - game_data:/app/data
+    depends_on:
+      - redis
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+  cleanup:
+    build: .
+    command: ["sh", "-c", "while true; do python manage.py cleanup_rooms --hours 24; sleep 3600; done"]
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-replace-this-before-public-deployment}
+      DATABASE_PATH: /app/data/db.sqlite3
+    volumes:
+      - game_data:/app/data
+    restart: unless-stopped
+  
+volumes:
+  game_data:

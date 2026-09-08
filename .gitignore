@@ -1,0 +1,7 @@
+.env
+.edge-qa/
+backend/.venv/
+backend/db.sqlite3
+backend/**/__pycache__/
+frontend/node_modules/
+frontend/dist/
