@@ -70,7 +70,7 @@ function AuthScreen({ onAuthenticated }) {
   }
 
   return <main className="entry-screen comic-entry"><section className="auth-panel">
-    <span className="comic-kicker">No login. Just cards.</span>
+    <span className="comic-kicker">Dump your cards. Dodge the pile.</span>
     <div className="brand auth-brand"><span className="brand-mark brand-mark-large" role="img" aria-label="Shithead">{"\uD83D\uDCA9"}</span><div><h1>Shithead</h1><p>Pick a name and hit the table</p></div></div>
     <form onSubmit={submit}>
       <label>What do we call you?<input value={username} onChange={event => setUsername(event.target.value)} minLength="2" maxLength="20" autoComplete="nickname" autoFocus placeholder="Player name" required /></label>
