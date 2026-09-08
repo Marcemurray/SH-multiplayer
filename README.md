@@ -1,12 +1,12 @@
 # SH-multiplayer
 
-A real-time browser version of the pub card game for two to four players. Create an account, open or discover a room, approve new players, and play from separate browsers with animated cards, sound, and comic-style power effects.
+A real-time browser version of the pub card game for two to four players. Pick a player name, open or discover a room, approve new players, and play from separate browsers with animated cards, sound, and comic-style power effects.
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Marcemurray/SH-multiplayer)
 
 ## Highlights
 
-- Authenticated private and discoverable multiplayer rooms
+- Password-free guest sessions with private and discoverable multiplayer rooms
 - Live WebSocket state with automatic reconnect and polling fallback
 - Responsive card table for desktop and mobile browsers
 - Server-authoritative turns, legal moves, hidden cards, and win state

@@ -1,9 +1,10 @@
 import json
+import uuid
 from datetime import timedelta
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.http import JsonResponse
@@ -19,6 +20,10 @@ def body_of(request):
         return json.loads(request.body or "{}")
     except json.JSONDecodeError as error:
         raise ValueError("Invalid JSON.") from error
+
+
+def player_name(user):
+    return user.first_name or user.username
 
 
 def auth_required(view):
@@ -44,9 +49,9 @@ def room_payload(room, user):
     payload = {
         "code": room.code,
         "status": room.status,
-        "host": room.host.username,
-        "players": [member.user.username for member in members],
-        "pending": [{"id": member.user_id, "name": member.user.username} for member in pending] if room.host_id == user.id else [],
+        "host": player_name(room.host),
+        "players": [player_name(member.user) for member in members],
+        "pending": [{"id": member.user_id, "name": player_name(member.user)} for member in pending] if room.host_id == user.id else [],
     }
     if membership and membership.status == "pending":
         payload["status"] = "pending"
@@ -85,18 +90,23 @@ def signup(request):
 @csrf_exempt
 def session(request):
     if request.method == "GET":
-        return JsonResponse({"username": request.user.username if request.user.is_authenticated else None})
+        return JsonResponse({"username": player_name(request.user) if request.user.is_authenticated else None})
     if request.method == "DELETE":
         logout(request)
         return JsonResponse({"ok": True})
     if request.method == "POST":
         try:
             data = body_of(request)
-            user = authenticate(request, username=data.get("username", ""), password=data.get("password", ""))
-            if user is None:
-                raise ValueError("Player name or password is incorrect.")
+            name = data.get("username", "").strip()
+            if not 2 <= len(name) <= 20:
+                raise ValueError("Choose a name between 2 and 20 characters.")
+            if not all(character.isalnum() or character in " _-" for character in name):
+                raise ValueError("Use letters, numbers, spaces, dashes, or underscores.")
+            user = User(username=f"guest_{uuid.uuid4().hex}", first_name=name)
+            user.set_unusable_password()
+            user.save()
             login(request, user)
-            return JsonResponse({"username": user.username})
+            return JsonResponse({"username": player_name(user)}, status=201)
         except ValueError as error:
             return JsonResponse({"error": str(error)}, status=400)
     return JsonResponse({"error": "Method not allowed"}, status=405)
@@ -112,7 +122,7 @@ def rooms(request):
         for room in candidates:
             player_count = sum(member.status == "approved" for member in room.members.all())
             if player_count < 4:
-                available.append({"code": room.code, "host": room.host.username, "player_count": player_count, "in_progress": room.status == "playing"})
+                available.append({"code": room.code, "host": player_name(room.host), "player_count": player_count, "in_progress": room.status == "playing"})
             if len(available) == 30:
                 break
         return JsonResponse({"rooms": available})
@@ -135,6 +145,9 @@ def join_room(request, code):
             return JsonResponse({"error": "Room not found."}, status=404)
         if room.host_id == request.user.id:
             return JsonResponse(room_payload(room, request.user))
+        approved_members = room.members.filter(status="approved").select_related("user")
+        if any(player_name(item.user).casefold() == player_name(request.user).casefold() for item in approved_members):
+            return JsonResponse({"error": "Someone at that table is already using that name."}, status=409)
         member, created = RoomMember.objects.get_or_create(room=room, user=request.user)
         if not created and member.status == "approved":
             return JsonResponse(room_payload(room, request.user))
@@ -166,10 +179,10 @@ def approve_member(request, code, user_id):
         approved = list(room.members.filter(status="approved").select_related("user").order_by("joined_at"))
         if len(approved) >= 2 and room.status == "waiting":
             room.status = "playing"
-            room.state = new_game(tuple(member.user.username for member in approved))
+            room.state = new_game(tuple(player_name(member.user) for member in approved))
             room.save(update_fields=["status", "state"])
         elif room.status == "playing":
-            add_player(room.state, member.user.username)
+            add_player(room.state, player_name(member.user))
             room.save(update_fields=["state"])
         transaction.on_commit(lambda: notify_room(room.code))
     return JsonResponse(room_payload(room, request.user))

@@ -45,29 +45,25 @@ function BackCards({ count, small = false }) {
 }
 
 function AuthScreen({ onAuthenticated }) {
-  const [mode, setMode] = useState("login");
   const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function submit(event) {
     event.preventDefault(); setBusy(true); setError("");
     try {
-      const path = mode === "signup" ? "/api/auth/signup/" : "/api/auth/session/";
-      const data = await api(path, { method: "POST", body: JSON.stringify({ username, password }) });
+      const data = await api("/api/auth/session/", { method: "POST", body: JSON.stringify({ username }) });
       onAuthenticated(data.username);
     } catch (err) { setError(err.message); } finally { setBusy(false); }
   }
 
-  return <main className="entry-screen"><section className="auth-panel">
-    <div className="brand auth-brand"><span className="brand-mark" role="img" aria-label="Shithead">💩</span><div><h1>Shithead</h1><p>Play your friends online</p></div></div>
-    <div className="mode-tabs"><button className={mode === "login" ? "selected" : ""} onClick={() => setMode("login")}>Sign in</button><button className={mode === "signup" ? "selected" : ""} onClick={() => setMode("signup")}>Create account</button></div>
+  return <main className="entry-screen comic-entry"><section className="auth-panel">
+    <span className="comic-kicker">No login. Just cards.</span>
+    <div className="brand auth-brand"><span className="brand-mark brand-mark-large" role="img" aria-label="Shithead">{"\uD83D\uDCA9"}</span><div><h1>Shithead</h1><p>Pick a name and hit the table</p></div></div>
     <form onSubmit={submit}>
-      <label>Player name<input value={username} onChange={event => setUsername(event.target.value)} minLength="3" autoComplete="username" required /></label>
-      <label>Password<input type="password" value={password} onChange={event => setPassword(event.target.value)} minLength="6" autoComplete={mode === "signup" ? "new-password" : "current-password"} required /></label>
+      <label>What do we call you?<input value={username} onChange={event => setUsername(event.target.value)} minLength="2" maxLength="20" autoComplete="nickname" autoFocus placeholder="Player name" required /></label>
       {error && <p className="form-error">{error}</p>}
-      <button className="primary-button" disabled={busy}>{busy ? "One moment..." : mode === "signup" ? "Create account" : "Sign in"}</button>
+      <button className="primary-button comic-button" disabled={busy}>{busy ? "Shuffling..." : "Let's play"}</button>
     </form>
   </section></main>;
 }
@@ -103,9 +99,9 @@ function Lobby({ username, onRoom, onLogout }) {
     catch (err) { setError(err.message); } finally { setBusy(false); }
   }
 
-  return <main className="entry-screen"><header className="lobby-header"><div className="brand"><span className="brand-mark" role="img" aria-label="Shithead">💩</span><div><h1>Shithead</h1><p>Signed in as {username}</p></div></div><button className="icon-button" onClick={onLogout} title="Sign out"><LogOut size={19} /></button></header>
-    <section className="lobby-panel"><div><span className="eyebrow">Multiplayer</span><h2>Choose your table</h2><p>Create a private room and share its five-character code, or join a friend who is already waiting.</p></div>
-      <button className="room-action" onClick={createRoom} disabled={busy}><Plus size={22} /><span><strong>Create room</strong><small>Start a new private table</small></span></button>
+  return <main className="entry-screen lobby-screen"><header className="lobby-header"><div className="brand"><span className="brand-mark" role="img" aria-label="Shithead">{"\uD83D\uDCA9"}</span><div><h1>Shithead</h1><p>Playing as {username}</p></div></div><button className="icon-button" onClick={onLogout} title="Change player"><LogOut size={19} /></button></header>
+    <section className="lobby-panel"><div className="lobby-title"><span className="comic-kicker">Ready when you are</span><h2>Pick a table!</h2></div>
+      <button className="room-action comic-action" onClick={createRoom} disabled={busy}><Plus size={22} /><span><strong>Create room</strong><small>Deal a fresh table</small></span></button>
       <div className="divider"><span>or join with a code</span></div>
       <form className="join-form" onSubmit={joinRoom}><input value={code} onChange={event => setCode(event.target.value.toUpperCase())} maxLength="5" placeholder="ABCDE" aria-label="Room code" required /><button className="primary-button" disabled={busy || code.length !== 5}><DoorOpen size={18} /> Join room</button></form>
       <div className="room-list"><div className="room-list-heading"><span>Open tables</span><small>{rooms.length} available</small></div>{rooms.length ? rooms.map(room => <div className="room-row" key={room.code}><div><strong>{room.code}</strong><small>{room.host}'s table · {room.player_count}/4 players{room.in_progress ? " · In progress" : ""}</small></div><button className="icon-button" onClick={() => requestRoom(room.code)} disabled={busy} title="Request to join"><UserPlus size={18} /></button></div>) : <p className="empty-list">No open tables yet.</p>}</div>
@@ -220,7 +216,7 @@ function GameRoom({ room, setRoom, soundOn, setSoundOn, onLeave }) {
   const moveFromYou = moveAnimation?.player === game.you.name;
   const displayedTopCard = showPreviousTop ? moveAnimation?.previousTop : game.top_card;
 
-  return <main className="game-shell"><header><div className="brand"><span className="brand-mark" role="img" aria-label="Shithead">💩</span><div><h1>Room {room.code}</h1><p>{room.players.join(" vs ")}</p></div></div><div className="header-actions"><span className={`connection-state ${connection}`}><i />{connection === "live" ? "Live" : "Reconnecting"}</span><button className="icon-button" onClick={() => setSoundOn(value => !value)} title={soundOn ? "Mute sounds" : "Turn sounds on"}>{soundOn ? <Volume2 size={19} /> : <VolumeX size={19} />}</button><button className="icon-button" onClick={onLeave} title="Leave table"><LogOut size={19} /></button></div></header>
+  return <main className="game-shell"><header><div className="brand"><span className="brand-mark" role="img" aria-label="Shithead">{"\uD83D\uDCA9"}</span><div><h1>Room {room.code}</h1><p>{room.players.join(" vs ")}</p></div></div><div className="header-actions"><span className={`connection-state ${connection}`}><i />{connection === "live" ? "Live" : "Reconnecting"}</span><button className="icon-button" onClick={() => setSoundOn(value => !value)} title={soundOn ? "Mute sounds" : "Turn sounds on"}>{soundOn ? <Volume2 size={19} /> : <VolumeX size={19} />}</button><button className="icon-button" onClick={onLeave} title="Leave table"><LogOut size={19} /></button></div></header>
     <section className={`table ${moveAnimation?.power ? `table-power-${moveAnimation.power}` : ""}`} aria-label="Card table">
       {!!room.pending?.length && <div className="join-requests"><span><UserPlus size={16} /> Join request</span>{room.pending.map(player => <button key={player.id} onClick={() => approvePlayer(player.id)} disabled={busy}><Check size={15} /> Add {player.name}</button>)}</div>}
       <div className="opponents">{game.opponents.map(opponent => <div data-player={opponent.name} className={`opponent ${game.current_player === opponent.name ? "active-player" : ""}`} key={opponent.name}><div className="player-label"><span className="avatar">{opponent.name[0].toUpperCase()}</span><div><strong>{opponent.name}</strong><small>{opponent.hand_count} in hand</small></div></div><BackCards count={opponent.hand_count} small /></div>)}</div>

@@ -82,6 +82,31 @@ class MultiplayerTests(TestCase):
             content_type="application/json",
         )
 
+    def guest(self, client, username):
+        return client.post(
+            "/api/auth/session/",
+            data=json.dumps({"username": username}),
+            content_type="application/json",
+        )
+
+    def test_guest_can_start_with_only_a_player_name(self):
+        client = Client()
+        response = self.guest(client, "Quick Player")
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()["username"], "Quick Player")
+        self.assertEqual(client.get("/api/auth/session/").json()["username"], "Quick Player")
+        self.assertFalse(User.objects.get(first_name="Quick Player").has_usable_password())
+
+    def test_guest_display_name_is_used_in_rooms(self):
+        client = Client()
+        self.guest(client, "Card Shark")
+
+        room = client.post("/api/rooms/", data="{}", content_type="application/json").json()
+
+        self.assertEqual(room["host"], "Card Shark")
+        self.assertEqual(room["players"], ["Card Shark"])
+
     def test_two_accounts_join_one_room_with_private_views(self):
         host, guest = Client(), Client()
         self.assertEqual(self.signup(host, "marcel").status_code, 201)
