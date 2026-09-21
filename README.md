@@ -59,3 +59,8 @@ The free Render service runs as a single instance, so it can omit Redis and use 
 ## Stack
 
 React, Vite, Django, Channels, Daphne, PostgreSQL/SQLite, Redis, and Docker.
+
+
+## Deployed app:
+
+For demo purposes here is the deployed app: https://sh-multiplayer.onrender.com
